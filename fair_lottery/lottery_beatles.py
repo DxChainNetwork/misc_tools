@@ -3,7 +3,7 @@
 """
 # File: fair_lottery.py
 # Last modified: 2023-05-09
-# Version: 0.2.0
+# Version: 0.3.0
 # Description: A fair lottery Python script for beatles
 """
 import sys
@@ -12,6 +12,7 @@ import hashlib
 import random
 
 import click
+import requests
 from tqdm import tqdm
 from web3 import Web3
 
@@ -37,14 +38,24 @@ abi = [
 @click.option('--btc_hash', default='', help='BTC Hash')
 @click.option('--sort', default=True, help='sort result')
 @click.option('--out', default='', help='output txt file')
-def main(start, end, count, btc_hash, sort, out):
+@click.option('--exclude', default='', help='exclude file, same format as output file')
+def main(start, end, count, btc_hash, sort, out, exclude):
     """"fair lottery main fun"""
+    if not btc_hash:
+        btc_block, btc_hash = get_btc_block()
+        print(f'latest block:[{btc_block}]\nblock hash:[{btc_hash}]')
+
     btc_hash_re = re.compile(r'^[0-9a-fA-F]{64}$')
     if not btc_hash_re.match(btc_hash):
         print(f'Invalid BTC transaction hash [{btc_hash}].')
         sys.exit(1)
 
     participants = range(start, end + 1)
+    if exclude:
+        with open(exclude, 'r') as file:
+            lines = file.readlines()
+            exclude_numbers_list = [int(line.split()[0][1:]) for line in lines if line.startswith("#")]
+        participants = list(filter(lambda x: x not in exclude_numbers_list, participants))
     winners = draw_lottery(participants, count, btc_hash)
     if sort:
         winners.sort()
@@ -86,6 +97,18 @@ def get_holder(winners, contract):
         address = contract.functions.ownerOf(winner).call()
         data.append((winner, address))
     return data
+
+
+def get_btc_block():
+    """get btc the latest block and block hash"""
+    url = "https://blockstream.info/api/blocks"
+    try:
+        response = requests.get(url)
+        data = response.json()
+        return data[0]['height'], data[0]['id']
+    except Exception as e:
+        print('Failed to get the latest block hash of BTC, please enter it manually')
+        sys.exit(1)
 
 
 if __name__ == '__main__':
