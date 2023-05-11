@@ -3,9 +3,10 @@
 """
 # File: fair_lottery.py
 # Last modified: 2023-05-09
-# Version: 0.3.0
+# Version: 0.4.0
 # Description: A fair lottery Python script for beatles
 """
+import os
 import sys
 import re
 import hashlib
@@ -41,21 +42,22 @@ abi = [
 @click.option('--exclude', default='', help='exclude file, same format as output file')
 def main(start, end, count, btc_hash, sort, out, exclude):
     """"fair lottery main fun"""
+    participants = range(start, end + 1)
+    exclude_numbers = get_exclude_numbers(exclude)
+    participants = list(filter(lambda x: x not in exclude_numbers, participants))
+    if count > len(participants):
+        print(f'start to end total:[{len(participants)}], count:[{count}]，count larger than population')
+        sys.exit(1)
+
     if not btc_hash:
         btc_block, btc_hash = get_btc_block()
-        print(f'latest block:[{btc_block}]\nblock hash:[{btc_hash}]')
+        print(f'latest BTC block:[{btc_block}]\nBTC block hash:[{btc_hash}]')
 
     btc_hash_re = re.compile(r'^[0-9a-fA-F]{64}$')
     if not btc_hash_re.match(btc_hash):
         print(f'Invalid BTC transaction hash [{btc_hash}].')
         sys.exit(1)
 
-    participants = range(start, end + 1)
-    if exclude:
-        with open(exclude, 'r') as file:
-            lines = file.readlines()
-            exclude_numbers_list = [int(line.split()[0][1:]) for line in lines if line.startswith("#")]
-        participants = list(filter(lambda x: x not in exclude_numbers_list, participants))
     winners = draw_lottery(participants, count, btc_hash)
     if sort:
         winners.sort()
@@ -109,6 +111,29 @@ def get_btc_block():
     except Exception as e:
         print('Failed to get the latest block hash of BTC, please enter it manually')
         sys.exit(1)
+
+
+def get_exclude_numbers(exclude):
+    """Get excluded whitelist"""
+    files = exclude.split(',')
+    exclude_numbers = []
+    pattern = re.compile(r'^#\d+$')
+    for file in files:
+        if file == '':
+            continue
+        if not os.path.exists(file):
+            print(f'No such file: {file}')
+            sys.exit(1)
+        f = open(file, 'r')
+        lines = f.readlines()
+        for line in lines:
+            token_id = line.rsplit(' ', 1)[0]
+            if not pattern.match(token_id):
+                print(f'"{line.rstrip()}" does not match the expected format in {file}')
+                sys.exit(1)
+            exclude_numbers.append(int(token_id[1:]))
+        f.close()
+    return exclude_numbers
 
 
 if __name__ == '__main__':
