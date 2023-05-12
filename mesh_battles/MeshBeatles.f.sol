@@ -16,7 +16,7 @@ pragma solidity ^0.8.0;
  *
  * For an implementation, see {ERC165}.
  */
-interface IERC165 {
+interface IERC165Upgradeable {
     /**
      * @dev Returns true if this contract implements the interface defined by
      * `interfaceId`. See the corresponding
@@ -31,7 +31,7 @@ interface IERC165 {
 /**
  * @dev Required interface of an ERC721 compliant contract.
  */
-interface IERC721 is IERC165 {
+interface IERC721Upgradeable is IERC165Upgradeable {
     /**
      * @dev Emitted when `tokenId` token is transferred from `from` to `to`.
      */
@@ -174,7 +174,7 @@ interface IERC721 is IERC165 {
  * @dev Interface for any contract that wants to support safeTransfers
  * from ERC721 asset contracts.
  */
-interface IERC721Receiver {
+interface IERC721ReceiverUpgradeable {
     /**
      * @dev Whenever an {IERC721} `tokenId` token is transferred to this contract via {IERC721-safeTransferFrom}
      * by `operator` from `from`, this function is called.
@@ -198,7 +198,7 @@ interface IERC721Receiver {
  * @title ERC-721 Non-Fungible Token Standard, optional metadata extension
  * @dev See https://eips.ethereum.org/EIPS/eip-721
  */
-interface IERC721Metadata is IERC721 {
+interface IERC721MetadataUpgradeable is IERC721Upgradeable {
     /**
      * @dev Returns the token collection name.
      */
@@ -220,7 +220,7 @@ interface IERC721Metadata is IERC721 {
 /**
  * @dev Collection of functions related to the address type
  */
-library Address {
+library AddressUpgradeable {
     /**
      * @dev Returns true if `account` is a contract.
      *
@@ -376,31 +376,6 @@ library Address {
     }
 
     /**
-     * @dev Same as {xref-Address-functionCall-address-bytes-}[`functionCall`],
-     * but performing a delegate call.
-     *
-     * _Available since v3.4._
-     */
-    function functionDelegateCall(address target, bytes memory data) internal returns (bytes memory) {
-        return functionDelegateCall(target, data, "Address: low-level delegate call failed");
-    }
-
-    /**
-     * @dev Same as {xref-Address-functionCall-address-bytes-string-}[`functionCall`],
-     * but performing a delegate call.
-     *
-     * _Available since v3.4._
-     */
-    function functionDelegateCall(
-        address target,
-        bytes memory data,
-        string memory errorMessage
-    ) internal returns (bytes memory) {
-        (bool success, bytes memory returndata) = target.delegatecall(data);
-        return verifyCallResultFromTarget(target, success, returndata, errorMessage);
-    }
-
-    /**
      * @dev Tool to verify that a low level call to smart-contract was successful, and revert (either by bubbling
      * the revert reason or using the provided one) in case of unsuccessful call or if target was not a contract.
      *
@@ -459,6 +434,167 @@ library Address {
 
 // OpenZeppelin Contracts v4.4.1 (utils/Context.sol)
 
+// OpenZeppelin Contracts (last updated v4.8.1) (proxy/utils/Initializable.sol)
+
+/**
+ * @dev This is a base contract to aid in writing upgradeable contracts, or any kind of contract that will be deployed
+ * behind a proxy. Since proxied contracts do not make use of a constructor, it's common to move constructor logic to an
+ * external initializer function, usually called `initialize`. It then becomes necessary to protect this initializer
+ * function so it can only be called once. The {initializer} modifier provided by this contract will have this effect.
+ *
+ * The initialization functions use a version number. Once a version number is used, it is consumed and cannot be
+ * reused. This mechanism prevents re-execution of each "step" but allows the creation of new initialization steps in
+ * case an upgrade adds a module that needs to be initialized.
+ *
+ * For example:
+ *
+ * [.hljs-theme-light.nopadding]
+ * ```
+ * contract MyToken is ERC20Upgradeable {
+ *     function initialize() initializer public {
+ *         __ERC20_init("MyToken", "MTK");
+ *     }
+ * }
+ * contract MyTokenV2 is MyToken, ERC20PermitUpgradeable {
+ *     function initializeV2() reinitializer(2) public {
+ *         __ERC20Permit_init("MyToken");
+ *     }
+ * }
+ * ```
+ *
+ * TIP: To avoid leaving the proxy in an uninitialized state, the initializer function should be called as early as
+ * possible by providing the encoded function call as the `_data` argument to {ERC1967Proxy-constructor}.
+ *
+ * CAUTION: When used with inheritance, manual care must be taken to not invoke a parent initializer twice, or to ensure
+ * that all initializers are idempotent. This is not verified automatically as constructors are by Solidity.
+ *
+ * [CAUTION]
+ * ====
+ * Avoid leaving a contract uninitialized.
+ *
+ * An uninitialized contract can be taken over by an attacker. This applies to both a proxy and its implementation
+ * contract, which may impact the proxy. To prevent the implementation contract from being used, you should invoke
+ * the {_disableInitializers} function in the constructor to automatically lock it when it is deployed:
+ *
+ * [.hljs-theme-light.nopadding]
+ * ```
+ * /// @custom:oz-upgrades-unsafe-allow constructor
+ * constructor() {
+ *     _disableInitializers();
+ * }
+ * ```
+ * ====
+ */
+abstract contract Initializable {
+    /**
+     * @dev Indicates that the contract has been initialized.
+     * @custom:oz-retyped-from bool
+     */
+    uint8 private _initialized;
+
+    /**
+     * @dev Indicates that the contract is in the process of being initialized.
+     */
+    bool private _initializing;
+
+    /**
+     * @dev Triggered when the contract has been initialized or reinitialized.
+     */
+    event Initialized(uint8 version);
+
+    /**
+     * @dev A modifier that defines a protected initializer function that can be invoked at most once. In its scope,
+     * `onlyInitializing` functions can be used to initialize parent contracts.
+     *
+     * Similar to `reinitializer(1)`, except that functions marked with `initializer` can be nested in the context of a
+     * constructor.
+     *
+     * Emits an {Initialized} event.
+     */
+    modifier initializer() {
+        bool isTopLevelCall = !_initializing;
+        require(
+            (isTopLevelCall && _initialized < 1) || (!AddressUpgradeable.isContract(address(this)) && _initialized == 1),
+            "Initializable: contract is already initialized"
+        );
+        _initialized = 1;
+        if (isTopLevelCall) {
+            _initializing = true;
+        }
+        _;
+        if (isTopLevelCall) {
+            _initializing = false;
+            emit Initialized(1);
+        }
+    }
+
+    /**
+     * @dev A modifier that defines a protected reinitializer function that can be invoked at most once, and only if the
+     * contract hasn't been initialized to a greater version before. In its scope, `onlyInitializing` functions can be
+     * used to initialize parent contracts.
+     *
+     * A reinitializer may be used after the original initialization step. This is essential to configure modules that
+     * are added through upgrades and that require initialization.
+     *
+     * When `version` is 1, this modifier is similar to `initializer`, except that functions marked with `reinitializer`
+     * cannot be nested. If one is invoked in the context of another, execution will revert.
+     *
+     * Note that versions can jump in increments greater than 1; this implies that if multiple reinitializers coexist in
+     * a contract, executing them in the right order is up to the developer or operator.
+     *
+     * WARNING: setting the version to 255 will prevent any future reinitialization.
+     *
+     * Emits an {Initialized} event.
+     */
+    modifier reinitializer(uint8 version) {
+        require(!_initializing && _initialized < version, "Initializable: contract is already initialized");
+        _initialized = version;
+        _initializing = true;
+        _;
+        _initializing = false;
+        emit Initialized(version);
+    }
+
+    /**
+     * @dev Modifier to protect an initialization function so that it can only be invoked by functions with the
+     * {initializer} and {reinitializer} modifiers, directly or indirectly.
+     */
+    modifier onlyInitializing() {
+        require(_initializing, "Initializable: contract is not initializing");
+        _;
+    }
+
+    /**
+     * @dev Locks the contract, preventing any future reinitialization. This cannot be part of an initializer call.
+     * Calling this in the constructor of a contract will prevent that contract from being initialized or reinitialized
+     * to any version. It is recommended to use this to lock implementation contracts that are designed to be called
+     * through proxies.
+     *
+     * Emits an {Initialized} event the first time it is successfully executed.
+     */
+    function _disableInitializers() internal virtual {
+        require(!_initializing, "Initializable: contract is initializing");
+        if (_initialized < type(uint8).max) {
+            _initialized = type(uint8).max;
+            emit Initialized(type(uint8).max);
+        }
+    }
+
+    /**
+     * @dev Returns the highest version that has been initialized. See {reinitializer}.
+     */
+    function _getInitializedVersion() internal view returns (uint8) {
+        return _initialized;
+    }
+
+    /**
+     * @dev Returns `true` if the contract is currently initializing. See {onlyInitializing}.
+     */
+    function _isInitializing() internal view returns (bool) {
+        return _initializing;
+    }
+}
+
 /**
  * @dev Provides information about the current execution context, including the
  * sender of the transaction and its data. While these are generally available
@@ -469,7 +605,12 @@ library Address {
  *
  * This contract is only required for intermediate, library-like contracts.
  */
-abstract contract Context {
+abstract contract ContextUpgradeable is Initializable {
+    function __Context_init() internal onlyInitializing {
+    }
+
+    function __Context_init_unchained() internal onlyInitializing {
+    }
     function _msgSender() internal view virtual returns (address) {
         return msg.sender;
     }
@@ -477,6 +618,13 @@ abstract contract Context {
     function _msgData() internal view virtual returns (bytes calldata) {
         return msg.data;
     }
+
+    /**
+     * @dev This empty reserved space is put in place to allow future versions to add new
+     * variables without shifting down storage in the inheritance chain.
+     * See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps
+     */
+    uint256[50] private __gap;
 }
 
 // OpenZeppelin Contracts (last updated v4.8.0) (utils/Strings.sol)
@@ -486,7 +634,7 @@ abstract contract Context {
 /**
  * @dev Standard math utilities missing in the Solidity language.
  */
-library Math {
+library MathUpgradeable {
     enum Rounding {
         Down, // Toward negative infinity
         Up, // Toward infinity
@@ -827,7 +975,7 @@ library Math {
 /**
  * @dev String operations.
  */
-library Strings {
+library StringsUpgradeable {
     bytes16 private constant _SYMBOLS = "0123456789abcdef";
     uint8 private constant _ADDRESS_LENGTH = 20;
 
@@ -836,7 +984,7 @@ library Strings {
      */
     function toString(uint256 value) internal pure returns (string memory) {
         unchecked {
-            uint256 length = Math.log10(value) + 1;
+            uint256 length = MathUpgradeable.log10(value) + 1;
             string memory buffer = new string(length);
             uint256 ptr;
             /// @solidity memory-safe-assembly
@@ -861,7 +1009,7 @@ library Strings {
      */
     function toHexString(uint256 value) internal pure returns (string memory) {
         unchecked {
-            return toHexString(value, Math.log256(value) + 1);
+            return toHexString(value, MathUpgradeable.log256(value) + 1);
         }
     }
 
@@ -904,13 +1052,25 @@ library Strings {
  *
  * Alternatively, {ERC165Storage} provides an easier to use but more expensive implementation.
  */
-abstract contract ERC165 is IERC165 {
+abstract contract ERC165Upgradeable is Initializable, IERC165Upgradeable {
+    function __ERC165_init() internal onlyInitializing {
+    }
+
+    function __ERC165_init_unchained() internal onlyInitializing {
+    }
     /**
      * @dev See {IERC165-supportsInterface}.
      */
     function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
-        return interfaceId == type(IERC165).interfaceId;
+        return interfaceId == type(IERC165Upgradeable).interfaceId;
     }
+
+    /**
+     * @dev This empty reserved space is put in place to allow future versions to add new
+     * variables without shifting down storage in the inheritance chain.
+     * See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps
+     */
+    uint256[50] private __gap;
 }
 
 /**
@@ -918,9 +1078,9 @@ abstract contract ERC165 is IERC165 {
  * the Metadata extension, but not including the Enumerable extension, which is available separately as
  * {ERC721Enumerable}.
  */
-contract ERC721 is Context, ERC165, IERC721, IERC721Metadata {
-    using Address for address;
-    using Strings for uint256;
+contract ERC721Upgradeable is Initializable, ContextUpgradeable, ERC165Upgradeable, IERC721Upgradeable, IERC721MetadataUpgradeable {
+    using AddressUpgradeable for address;
+    using StringsUpgradeable for uint256;
 
     // Token name
     string private _name;
@@ -943,7 +1103,11 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata {
     /**
      * @dev Initializes the contract by setting a `name` and a `symbol` to the token collection.
      */
-    constructor(string memory name_, string memory symbol_) {
+    function __ERC721_init(string memory name_, string memory symbol_) internal onlyInitializing {
+        __ERC721_init_unchained(name_, symbol_);
+    }
+
+    function __ERC721_init_unchained(string memory name_, string memory symbol_) internal onlyInitializing {
         _name = name_;
         _symbol = symbol_;
     }
@@ -951,10 +1115,10 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata {
     /**
      * @dev See {IERC165-supportsInterface}.
      */
-    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC165, IERC165) returns (bool) {
+    function supportsInterface(bytes4 interfaceId) public view virtual override(ERC165Upgradeable, IERC165Upgradeable) returns (bool) {
         return
-            interfaceId == type(IERC721).interfaceId ||
-            interfaceId == type(IERC721Metadata).interfaceId ||
+            interfaceId == type(IERC721Upgradeable).interfaceId ||
+            interfaceId == type(IERC721MetadataUpgradeable).interfaceId ||
             super.supportsInterface(interfaceId);
     }
 
@@ -1012,7 +1176,7 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata {
      * @dev See {IERC721-approve}.
      */
     function approve(address to, uint256 tokenId) public virtual override {
-        address owner = ERC721.ownerOf(tokenId);
+        address owner = ERC721Upgradeable.ownerOf(tokenId);
         require(to != owner, "ERC721: approval to current owner");
 
         require(
@@ -1139,7 +1303,7 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata {
      * - `tokenId` must exist.
      */
     function _isApprovedOrOwner(address spender, uint256 tokenId) internal view virtual returns (bool) {
-        address owner = ERC721.ownerOf(tokenId);
+        address owner = ERC721Upgradeable.ownerOf(tokenId);
         return (spender == owner || isApprovedForAll(owner, spender) || getApproved(tokenId) == spender);
     }
 
@@ -1221,12 +1385,12 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata {
      * Emits a {Transfer} event.
      */
     function _burn(uint256 tokenId) internal virtual {
-        address owner = ERC721.ownerOf(tokenId);
+        address owner = ERC721Upgradeable.ownerOf(tokenId);
 
         _beforeTokenTransfer(owner, address(0), tokenId, 1);
 
         // Update ownership in case tokenId was transferred by `_beforeTokenTransfer` hook
-        owner = ERC721.ownerOf(tokenId);
+        owner = ERC721Upgradeable.ownerOf(tokenId);
 
         // Clear approvals
         delete _tokenApprovals[tokenId];
@@ -1259,13 +1423,13 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata {
         address to,
         uint256 tokenId
     ) internal virtual {
-        require(ERC721.ownerOf(tokenId) == from, "ERC721: transfer from incorrect owner");
+        require(ERC721Upgradeable.ownerOf(tokenId) == from, "ERC721: transfer from incorrect owner");
         require(to != address(0), "ERC721: transfer to the zero address");
 
         _beforeTokenTransfer(from, to, tokenId, 1);
 
         // Check that tokenId was not transferred by `_beforeTokenTransfer` hook
-        require(ERC721.ownerOf(tokenId) == from, "ERC721: transfer from incorrect owner");
+        require(ERC721Upgradeable.ownerOf(tokenId) == from, "ERC721: transfer from incorrect owner");
 
         // Clear approvals from the previous owner
         delete _tokenApprovals[tokenId];
@@ -1293,7 +1457,7 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata {
      */
     function _approve(address to, uint256 tokenId) internal virtual {
         _tokenApprovals[tokenId] = to;
-        emit Approval(ERC721.ownerOf(tokenId), to, tokenId);
+        emit Approval(ERC721Upgradeable.ownerOf(tokenId), to, tokenId);
     }
 
     /**
@@ -1335,8 +1499,8 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata {
         bytes memory data
     ) private returns (bool) {
         if (to.isContract()) {
-            try IERC721Receiver(to).onERC721Received(_msgSender(), from, tokenId, data) returns (bytes4 retval) {
-                return retval == IERC721Receiver.onERC721Received.selector;
+            try IERC721ReceiverUpgradeable(to).onERC721Received(_msgSender(), from, tokenId, data) returns (bytes4 retval) {
+                return retval == IERC721ReceiverUpgradeable.onERC721Received.selector;
             } catch (bytes memory reason) {
                 if (reason.length == 0) {
                     revert("ERC721: transfer to non ERC721Receiver implementer");
@@ -1405,6 +1569,13 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata {
     function __unsafe_increaseBalance(address account, uint256 amount) internal {
         _balances[account] += amount;
     }
+
+    /**
+     * @dev This empty reserved space is put in place to allow future versions to add new
+     * variables without shifting down storage in the inheritance chain.
+     * See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps
+     */
+    uint256[44] private __gap;
 }
 
 // OpenZeppelin Contracts (last updated v4.7.0) (access/Ownable.sol)
@@ -1421,7 +1592,7 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Metadata {
  * `onlyOwner`, which can be applied to your functions to restrict their use to
  * the owner.
  */
-abstract contract Ownable is Context {
+abstract contract OwnableUpgradeable is Initializable, ContextUpgradeable {
     address private _owner;
 
     event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
@@ -1429,7 +1600,11 @@ abstract contract Ownable is Context {
     /**
      * @dev Initializes the contract setting the deployer as the initial owner.
      */
-    constructor() {
+    function __Ownable_init() internal onlyInitializing {
+        __Ownable_init_unchained();
+    }
+
+    function __Ownable_init_unchained() internal onlyInitializing {
         _transferOwnership(_msgSender());
     }
 
@@ -1484,193 +1659,13 @@ abstract contract Ownable is Context {
         _owner = newOwner;
         emit OwnershipTransferred(oldOwner, newOwner);
     }
-}
-
-// OpenZeppelin Contracts (last updated v4.8.0) (token/ERC721/extensions/ERC721Enumerable.sol)
-
-// OpenZeppelin Contracts (last updated v4.5.0) (token/ERC721/extensions/IERC721Enumerable.sol)
-
-/**
- * @title ERC-721 Non-Fungible Token Standard, optional enumeration extension
- * @dev See https://eips.ethereum.org/EIPS/eip-721
- */
-interface IERC721Enumerable is IERC721 {
-    /**
-     * @dev Returns the total amount of tokens stored by the contract.
-     */
-    function totalSupply() external view returns (uint256);
 
     /**
-     * @dev Returns a token ID owned by `owner` at a given `index` of its token list.
-     * Use along with {balanceOf} to enumerate all of ``owner``'s tokens.
+     * @dev This empty reserved space is put in place to allow future versions to add new
+     * variables without shifting down storage in the inheritance chain.
+     * See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps
      */
-    function tokenOfOwnerByIndex(address owner, uint256 index) external view returns (uint256);
-
-    /**
-     * @dev Returns a token ID at a given `index` of all the tokens stored by the contract.
-     * Use along with {totalSupply} to enumerate all tokens.
-     */
-    function tokenByIndex(uint256 index) external view returns (uint256);
-}
-
-/**
- * @dev This implements an optional extension of {ERC721} defined in the EIP that adds
- * enumerability of all the token ids in the contract as well as all token ids owned by each
- * account.
- */
-abstract contract ERC721Enumerable is ERC721, IERC721Enumerable {
-    // Mapping from owner to list of owned token IDs
-    mapping(address => mapping(uint256 => uint256)) private _ownedTokens;
-
-    // Mapping from token ID to index of the owner tokens list
-    mapping(uint256 => uint256) private _ownedTokensIndex;
-
-    // Array with all token ids, used for enumeration
-    uint256[] private _allTokens;
-
-    // Mapping from token id to position in the allTokens array
-    mapping(uint256 => uint256) private _allTokensIndex;
-
-    /**
-     * @dev See {IERC165-supportsInterface}.
-     */
-    function supportsInterface(bytes4 interfaceId) public view virtual override(IERC165, ERC721) returns (bool) {
-        return interfaceId == type(IERC721Enumerable).interfaceId || super.supportsInterface(interfaceId);
-    }
-
-    /**
-     * @dev See {IERC721Enumerable-tokenOfOwnerByIndex}.
-     */
-    function tokenOfOwnerByIndex(address owner, uint256 index) public view virtual override returns (uint256) {
-        require(index < ERC721.balanceOf(owner), "ERC721Enumerable: owner index out of bounds");
-        return _ownedTokens[owner][index];
-    }
-
-    /**
-     * @dev See {IERC721Enumerable-totalSupply}.
-     */
-    function totalSupply() public view virtual override returns (uint256) {
-        return _allTokens.length;
-    }
-
-    /**
-     * @dev See {IERC721Enumerable-tokenByIndex}.
-     */
-    function tokenByIndex(uint256 index) public view virtual override returns (uint256) {
-        require(index < ERC721Enumerable.totalSupply(), "ERC721Enumerable: global index out of bounds");
-        return _allTokens[index];
-    }
-
-    /**
-     * @dev See {ERC721-_beforeTokenTransfer}.
-     */
-    function _beforeTokenTransfer(
-        address from,
-        address to,
-        uint256 firstTokenId,
-        uint256 batchSize
-    ) internal virtual override {
-        super._beforeTokenTransfer(from, to, firstTokenId, batchSize);
-
-        if (batchSize > 1) {
-            // Will only trigger during construction. Batch transferring (minting) is not available afterwards.
-            revert("ERC721Enumerable: consecutive transfers not supported");
-        }
-
-        uint256 tokenId = firstTokenId;
-
-        if (from == address(0)) {
-            _addTokenToAllTokensEnumeration(tokenId);
-        } else if (from != to) {
-            _removeTokenFromOwnerEnumeration(from, tokenId);
-        }
-        if (to == address(0)) {
-            _removeTokenFromAllTokensEnumeration(tokenId);
-        } else if (to != from) {
-            _addTokenToOwnerEnumeration(to, tokenId);
-        }
-    }
-
-    /**
-     * @dev Private function to add a token to this extension's ownership-tracking data structures.
-     * @param to address representing the new owner of the given token ID
-     * @param tokenId uint256 ID of the token to be added to the tokens list of the given address
-     */
-    function _addTokenToOwnerEnumeration(address to, uint256 tokenId) private {
-        uint256 length = ERC721.balanceOf(to);
-        _ownedTokens[to][length] = tokenId;
-        _ownedTokensIndex[tokenId] = length;
-    }
-
-    /**
-     * @dev Private function to add a token to this extension's token tracking data structures.
-     * @param tokenId uint256 ID of the token to be added to the tokens list
-     */
-    function _addTokenToAllTokensEnumeration(uint256 tokenId) private {
-        _allTokensIndex[tokenId] = _allTokens.length;
-        _allTokens.push(tokenId);
-    }
-
-    /**
-     * @dev Private function to remove a token from this extension's ownership-tracking data structures. Note that
-     * while the token is not assigned a new owner, the `_ownedTokensIndex` mapping is _not_ updated: this allows for
-     * gas optimizations e.g. when performing a transfer operation (avoiding double writes).
-     * This has O(1) time complexity, but alters the order of the _ownedTokens array.
-     * @param from address representing the previous owner of the given token ID
-     * @param tokenId uint256 ID of the token to be removed from the tokens list of the given address
-     */
-    function _removeTokenFromOwnerEnumeration(address from, uint256 tokenId) private {
-        // To prevent a gap in from's tokens array, we store the last token in the index of the token to delete, and
-        // then delete the last slot (swap and pop).
-
-        uint256 lastTokenIndex = ERC721.balanceOf(from) - 1;
-        uint256 tokenIndex = _ownedTokensIndex[tokenId];
-
-        // When the token to delete is the last token, the swap operation is unnecessary
-        if (tokenIndex != lastTokenIndex) {
-            uint256 lastTokenId = _ownedTokens[from][lastTokenIndex];
-
-            _ownedTokens[from][tokenIndex] = lastTokenId; // Move the last token to the slot of the to-delete token
-            _ownedTokensIndex[lastTokenId] = tokenIndex; // Update the moved token's index
-        }
-
-        // This also deletes the contents at the last position of the array
-        delete _ownedTokensIndex[tokenId];
-        delete _ownedTokens[from][lastTokenIndex];
-    }
-
-    /**
-     * @dev Private function to remove a token from this extension's token tracking data structures.
-     * This has O(1) time complexity, but alters the order of the _allTokens array.
-     * @param tokenId uint256 ID of the token to be removed from the tokens list
-     */
-    function _removeTokenFromAllTokensEnumeration(uint256 tokenId) private {
-        // To prevent a gap in the tokens array, we store the last token in the index of the token to delete, and
-        // then delete the last slot (swap and pop).
-
-        uint256 lastTokenIndex = _allTokens.length - 1;
-        uint256 tokenIndex = _allTokensIndex[tokenId];
-
-        // When the token to delete is the last token, the swap operation is unnecessary. However, since this occurs so
-        // rarely (when the last minted token is burnt) that we still do the swap here to avoid the gas cost of adding
-        // an 'if' statement (like in _removeTokenFromOwnerEnumeration)
-        uint256 lastTokenId = _allTokens[lastTokenIndex];
-
-        _allTokens[tokenIndex] = lastTokenId; // Move the last token to the slot of the to-delete token
-        _allTokensIndex[lastTokenId] = tokenIndex; // Update the moved token's index
-
-        // This also deletes the contents at the last position of the array
-        delete _allTokensIndex[tokenId];
-        _allTokens.pop();
-    }
-}
-
-interface IBeatles {
-    function balanceOf(address owner) external view returns (uint256 balance);
-
-    function tokenOfOwnerByIndex(address owner, uint256 index) external view returns (uint256);
-
-    function ownerOf(uint256 tokenId) external view returns (address owner);
+    uint256[49] private __gap;
 }
 
 // OpenZeppelin Contracts (last updated v4.7.0) (security/Pausable.sol)
@@ -1684,7 +1679,7 @@ interface IBeatles {
  * the functions of your contract. Note that they will not be pausable by
  * simply including this module, only once the modifiers are put in place.
  */
-abstract contract Pausable is Context {
+abstract contract PausableUpgradeable is Initializable, ContextUpgradeable {
     /**
      * @dev Emitted when the pause is triggered by `account`.
      */
@@ -1700,7 +1695,11 @@ abstract contract Pausable is Context {
     /**
      * @dev Initializes the contract in unpaused state.
      */
-    constructor() {
+    function __Pausable_init() internal onlyInitializing {
+        __Pausable_init_unchained();
+    }
+
+    function __Pausable_init_unchained() internal onlyInitializing {
         _paused = false;
     }
 
@@ -1772,6 +1771,13 @@ abstract contract Pausable is Context {
         _paused = false;
         emit Unpaused(_msgSender());
     }
+
+    /**
+     * @dev This empty reserved space is put in place to allow future versions to add new
+     * variables without shifting down storage in the inheritance chain.
+     * See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps
+     */
+    uint256[49] private __gap;
 }
 
 // OpenZeppelin Contracts (last updated v4.8.0) (access/AccessControl.sol)
@@ -1781,7 +1787,7 @@ abstract contract Pausable is Context {
 /**
  * @dev External interface of AccessControl declared to support ERC165 detection.
  */
-interface IAccessControl {
+interface IAccessControlUpgradeable {
     /**
      * @dev Emitted when `newAdminRole` is set as ``role``'s admin role, replacing `previousAdminRole`
      *
@@ -1900,7 +1906,12 @@ interface IAccessControl {
  * grant and revoke this role. Extra precautions should be taken to secure
  * accounts that have been granted it.
  */
-abstract contract AccessControl is Context, IAccessControl, ERC165 {
+abstract contract AccessControlUpgradeable is Initializable, ContextUpgradeable, IAccessControlUpgradeable, ERC165Upgradeable {
+    function __AccessControl_init() internal onlyInitializing {
+    }
+
+    function __AccessControl_init_unchained() internal onlyInitializing {
+    }
     struct RoleData {
         mapping(address => bool) members;
         bytes32 adminRole;
@@ -1929,7 +1940,7 @@ abstract contract AccessControl is Context, IAccessControl, ERC165 {
      * @dev See {IERC165-supportsInterface}.
      */
     function supportsInterface(bytes4 interfaceId) public view virtual override returns (bool) {
-        return interfaceId == type(IAccessControl).interfaceId || super.supportsInterface(interfaceId);
+        return interfaceId == type(IAccessControlUpgradeable).interfaceId || super.supportsInterface(interfaceId);
     }
 
     /**
@@ -1964,9 +1975,9 @@ abstract contract AccessControl is Context, IAccessControl, ERC165 {
                 string(
                     abi.encodePacked(
                         "AccessControl: account ",
-                        Strings.toHexString(account),
+                        StringsUpgradeable.toHexString(account),
                         " is missing role ",
-                        Strings.toHexString(uint256(role), 32)
+                        StringsUpgradeable.toHexString(uint256(role), 32)
                     )
                 )
             );
@@ -2098,6 +2109,13 @@ abstract contract AccessControl is Context, IAccessControl, ERC165 {
             emit RoleRevoked(role, account, _msgSender());
         }
     }
+
+    /**
+     * @dev This empty reserved space is put in place to allow future versions to add new
+     * variables without shifting down storage in the inheritance chain.
+     * See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps
+     */
+    uint256[49] private __gap;
 }
 
 // OpenZeppelin Contracts v4.4.1 (utils/Counters.sol)
@@ -2110,7 +2128,7 @@ abstract contract AccessControl is Context, IAccessControl, ERC165 {
  *
  * Include with `using Counters for Counters.Counter;`
  */
-library Counters {
+library CountersUpgradeable {
     struct Counter {
         // This variable should never be directly accessed by users of the library: interactions must be restricted to
         // the library's function. As of Solidity v0.5.2, this cannot be enforced, though there is a proposal to add
@@ -2141,13 +2159,209 @@ library Counters {
     }
 }
 
+// OpenZeppelin Contracts (last updated v4.8.0) (token/ERC721/extensions/ERC721Enumerable.sol)
+
+// OpenZeppelin Contracts (last updated v4.5.0) (token/ERC721/extensions/IERC721Enumerable.sol)
+
+/**
+ * @title ERC-721 Non-Fungible Token Standard, optional enumeration extension
+ * @dev See https://eips.ethereum.org/EIPS/eip-721
+ */
+interface IERC721EnumerableUpgradeable is IERC721Upgradeable {
+    /**
+     * @dev Returns the total amount of tokens stored by the contract.
+     */
+    function totalSupply() external view returns (uint256);
+
+    /**
+     * @dev Returns a token ID owned by `owner` at a given `index` of its token list.
+     * Use along with {balanceOf} to enumerate all of ``owner``'s tokens.
+     */
+    function tokenOfOwnerByIndex(address owner, uint256 index) external view returns (uint256);
+
+    /**
+     * @dev Returns a token ID at a given `index` of all the tokens stored by the contract.
+     * Use along with {totalSupply} to enumerate all tokens.
+     */
+    function tokenByIndex(uint256 index) external view returns (uint256);
+}
+
+/**
+ * @dev This implements an optional extension of {ERC721} defined in the EIP that adds
+ * enumerability of all the token ids in the contract as well as all token ids owned by each
+ * account.
+ */
+abstract contract ERC721EnumerableUpgradeable is Initializable, ERC721Upgradeable, IERC721EnumerableUpgradeable {
+    function __ERC721Enumerable_init() internal onlyInitializing {
+    }
+
+    function __ERC721Enumerable_init_unchained() internal onlyInitializing {
+    }
+    // Mapping from owner to list of owned token IDs
+    mapping(address => mapping(uint256 => uint256)) private _ownedTokens;
+
+    // Mapping from token ID to index of the owner tokens list
+    mapping(uint256 => uint256) private _ownedTokensIndex;
+
+    // Array with all token ids, used for enumeration
+    uint256[] private _allTokens;
+
+    // Mapping from token id to position in the allTokens array
+    mapping(uint256 => uint256) private _allTokensIndex;
+
+    /**
+     * @dev See {IERC165-supportsInterface}.
+     */
+    function supportsInterface(bytes4 interfaceId) public view virtual override(IERC165Upgradeable, ERC721Upgradeable) returns (bool) {
+        return interfaceId == type(IERC721EnumerableUpgradeable).interfaceId || super.supportsInterface(interfaceId);
+    }
+
+    /**
+     * @dev See {IERC721Enumerable-tokenOfOwnerByIndex}.
+     */
+    function tokenOfOwnerByIndex(address owner, uint256 index) public view virtual override returns (uint256) {
+        require(index < ERC721Upgradeable.balanceOf(owner), "ERC721Enumerable: owner index out of bounds");
+        return _ownedTokens[owner][index];
+    }
+
+    /**
+     * @dev See {IERC721Enumerable-totalSupply}.
+     */
+    function totalSupply() public view virtual override returns (uint256) {
+        return _allTokens.length;
+    }
+
+    /**
+     * @dev See {IERC721Enumerable-tokenByIndex}.
+     */
+    function tokenByIndex(uint256 index) public view virtual override returns (uint256) {
+        require(index < ERC721EnumerableUpgradeable.totalSupply(), "ERC721Enumerable: global index out of bounds");
+        return _allTokens[index];
+    }
+
+    /**
+     * @dev See {ERC721-_beforeTokenTransfer}.
+     */
+    function _beforeTokenTransfer(
+        address from,
+        address to,
+        uint256 firstTokenId,
+        uint256 batchSize
+    ) internal virtual override {
+        super._beforeTokenTransfer(from, to, firstTokenId, batchSize);
+
+        if (batchSize > 1) {
+            // Will only trigger during construction. Batch transferring (minting) is not available afterwards.
+            revert("ERC721Enumerable: consecutive transfers not supported");
+        }
+
+        uint256 tokenId = firstTokenId;
+
+        if (from == address(0)) {
+            _addTokenToAllTokensEnumeration(tokenId);
+        } else if (from != to) {
+            _removeTokenFromOwnerEnumeration(from, tokenId);
+        }
+        if (to == address(0)) {
+            _removeTokenFromAllTokensEnumeration(tokenId);
+        } else if (to != from) {
+            _addTokenToOwnerEnumeration(to, tokenId);
+        }
+    }
+
+    /**
+     * @dev Private function to add a token to this extension's ownership-tracking data structures.
+     * @param to address representing the new owner of the given token ID
+     * @param tokenId uint256 ID of the token to be added to the tokens list of the given address
+     */
+    function _addTokenToOwnerEnumeration(address to, uint256 tokenId) private {
+        uint256 length = ERC721Upgradeable.balanceOf(to);
+        _ownedTokens[to][length] = tokenId;
+        _ownedTokensIndex[tokenId] = length;
+    }
+
+    /**
+     * @dev Private function to add a token to this extension's token tracking data structures.
+     * @param tokenId uint256 ID of the token to be added to the tokens list
+     */
+    function _addTokenToAllTokensEnumeration(uint256 tokenId) private {
+        _allTokensIndex[tokenId] = _allTokens.length;
+        _allTokens.push(tokenId);
+    }
+
+    /**
+     * @dev Private function to remove a token from this extension's ownership-tracking data structures. Note that
+     * while the token is not assigned a new owner, the `_ownedTokensIndex` mapping is _not_ updated: this allows for
+     * gas optimizations e.g. when performing a transfer operation (avoiding double writes).
+     * This has O(1) time complexity, but alters the order of the _ownedTokens array.
+     * @param from address representing the previous owner of the given token ID
+     * @param tokenId uint256 ID of the token to be removed from the tokens list of the given address
+     */
+    function _removeTokenFromOwnerEnumeration(address from, uint256 tokenId) private {
+        // To prevent a gap in from's tokens array, we store the last token in the index of the token to delete, and
+        // then delete the last slot (swap and pop).
+
+        uint256 lastTokenIndex = ERC721Upgradeable.balanceOf(from) - 1;
+        uint256 tokenIndex = _ownedTokensIndex[tokenId];
+
+        // When the token to delete is the last token, the swap operation is unnecessary
+        if (tokenIndex != lastTokenIndex) {
+            uint256 lastTokenId = _ownedTokens[from][lastTokenIndex];
+
+            _ownedTokens[from][tokenIndex] = lastTokenId; // Move the last token to the slot of the to-delete token
+            _ownedTokensIndex[lastTokenId] = tokenIndex; // Update the moved token's index
+        }
+
+        // This also deletes the contents at the last position of the array
+        delete _ownedTokensIndex[tokenId];
+        delete _ownedTokens[from][lastTokenIndex];
+    }
+
+    /**
+     * @dev Private function to remove a token from this extension's token tracking data structures.
+     * This has O(1) time complexity, but alters the order of the _allTokens array.
+     * @param tokenId uint256 ID of the token to be removed from the tokens list
+     */
+    function _removeTokenFromAllTokensEnumeration(uint256 tokenId) private {
+        // To prevent a gap in the tokens array, we store the last token in the index of the token to delete, and
+        // then delete the last slot (swap and pop).
+
+        uint256 lastTokenIndex = _allTokens.length - 1;
+        uint256 tokenIndex = _allTokensIndex[tokenId];
+
+        // When the token to delete is the last token, the swap operation is unnecessary. However, since this occurs so
+        // rarely (when the last minted token is burnt) that we still do the swap here to avoid the gas cost of adding
+        // an 'if' statement (like in _removeTokenFromOwnerEnumeration)
+        uint256 lastTokenId = _allTokens[lastTokenIndex];
+
+        _allTokens[tokenIndex] = lastTokenId; // Move the last token to the slot of the to-delete token
+        _allTokensIndex[lastTokenId] = tokenIndex; // Update the moved token's index
+
+        // This also deletes the contents at the last position of the array
+        delete _allTokensIndex[tokenId];
+        _allTokens.pop();
+    }
+
+    /**
+     * @dev This empty reserved space is put in place to allow future versions to add new
+     * variables without shifting down storage in the inheritance chain.
+     * See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps
+     */
+    uint256[46] private __gap;
+}
+
 // OpenZeppelin Contracts (last updated v4.8.0) (token/ERC721/extensions/ERC721Burnable.sol)
 
 /**
  * @title ERC721 Burnable Token
  * @dev ERC721 Token that can be burned (destroyed).
  */
-abstract contract ERC721Burnable is Context, ERC721 {
+abstract contract ERC721BurnableUpgradeable is Initializable, ContextUpgradeable, ERC721Upgradeable {
+    function __ERC721Burnable_init() internal onlyInitializing {
+    }
+
+    function __ERC721Burnable_init_unchained() internal onlyInitializing {
+    }
     /**
      * @dev Burns `tokenId`. See {ERC721-_burn}.
      *
@@ -2160,25 +2374,43 @@ abstract contract ERC721Burnable is Context, ERC721 {
         require(_isApprovedOrOwner(_msgSender(), tokenId), "ERC721: caller is not token owner or approved");
         _burn(tokenId);
     }
+
+    /**
+     * @dev This empty reserved space is put in place to allow future versions to add new
+     * variables without shifting down storage in the inheritance chain.
+     * See https://docs.openzeppelin.com/contracts/4.x/upgradeable#storage_gaps
+     */
+    uint256[50] private __gap;
 }
 
-contract MeshBeatles is ERC721, ERC721Enumerable, Ownable, Pausable, AccessControl {
-    using Counters for Counters.Counter;
-    Counters.Counter private _tokenIdCounter;
+interface IBeatles {
+    function balanceOf(address owner) external view returns (uint256 balance);
+
+    function tokenOfOwnerByIndex(address owner, uint256 index) external view returns (uint256);
+
+    function ownerOf(uint256 tokenId) external view returns (address owner);
+}
+
+contract MeshBeatles is ERC721Upgradeable, ERC721EnumerableUpgradeable, OwnableUpgradeable, PausableUpgradeable, AccessControlUpgradeable {
+    using CountersUpgradeable for CountersUpgradeable.Counter;
+    CountersUpgradeable.Counter private _tokenIdCounter;
 
     uint256 public constant MAX_SUPPLY = 3300;
     bytes32 public constant MINTER_ROLE = keccak256("MINTER_ROLE");
     uint256 public donation;
-    uint256 public duration;
-    uint256 public startTime;
-    uint256 public endTime;
-    bool public isOpen;
-    mapping(uint256 => mapping(uint256 => bool)) private _whitelist;
-    mapping(uint256 => uint256) private _whitelistCount;
-    mapping(uint256 => mapping(uint256 => bool)) private _isClaimed;
-    string private _baseTokenURI;
+    bool public isBoxOpen;
+    bool public isClaimOpen;
+    // round -> token -> is whitelist
+    mapping(uint256 => mapping(uint256 => bool)) public whitelist;
+    // round -> whitelist count
+    mapping(uint256 => uint256) public whitelistCount;
+    // token -> is claimed
+    mapping(uint256 => bool) public isClaimed;
+    string public baseTokenURI;
     address public beatles;
-
+    mapping(uint256 => string) public bitcoinAddress;
+    mapping(uint256 => address) public canUpdateBitcoin;
+    bool public enableUpdateBitcoin;
     enum State {
         Unqualified,
         Claimable,
@@ -2196,68 +2428,74 @@ contract MeshBeatles is ERC721, ERC721Enumerable, Ownable, Pausable, AccessContr
     mapping(uint256 => bool) public recycled;
 
     event CrossMint(uint256 indexed tokenId, address indexed owner);
-    event CrossBurn(uint256 indexed tokenId, address indexed owner, string bitcoinAddress, uint256 fee);
+    event CrossBurn(uint256 indexed tokenId, address indexed owner, string bitcoinAddress);
 
-    constructor(address _beatles, uint256 _donation, uint256 _duration) ERC721("Mesh Beatles", "MeshBeatles") {
+    function initialize(address _beatles, uint256 _donation) public virtual initializer {
         beatles = _beatles;
         donation = _donation;
-        duration = _duration;
+        __ERC721_init("Mesh Beatles", "MeshBeatles");
+        __ERC721Enumerable_init();
+        __Ownable_init();
+        __Pausable_init();
+        __AccessControl_init();
     }
 
     //==========================================
     //------------- Users Claim --------------
     //==========================================
-    function setDonation(uint256 _donation) external onlyOwner {
+    function setDonation(uint256 _donation) public virtual onlyOwner {
         donation = _donation;
     }
 
-    function setDuration(uint256 _duration) external onlyOwner {
-        duration = _duration;
+    function setCurrentRound(uint256 _roundId) public virtual onlyOwner {
+        currentRound = _roundId;
+        recycled[currentRound] = false;
     }
 
-    function startClaim() external onlyOwner {
-        require(endTime < block.timestamp, "BeatlesBox: claim has not ended");
-        if (endTime != 0 && endTime < block.timestamp) {
-            require(recycled[currentRound] == true, "BeatlesBox: round has not been recycled");
-        }
-        require(duration > 0, "BeatlesBox: duration is zero");
-        startTime = block.timestamp;
-        endTime = startTime + duration;
+    function setEnableUpdateBitcoin(bool _enableUpdateBitcoin) public virtual onlyOwner {
+        enableUpdateBitcoin = _enableUpdateBitcoin;
+    }
+
+    function setIsClaimOpen(bool _isClaimOpen) public virtual onlyOwner {
+        isClaimOpen = _isClaimOpen;
+    }
+
+    function startClaim() public virtual onlyOwner {
+        require(isClaimOpen == false, "MeshBeatles: claim has started");
         Round storage _round = round[currentRound];
         _round.roundId = currentRound;
         _round.claimedCount = 0;
-        _round.unClaimedCount = _whitelistCount[currentRound];
+        _round.unClaimedCount = whitelistCount[currentRound];
+        isClaimOpen = true;
     }
 
-    function getRound() external view returns (Round memory) {
+    function getRound() public view virtual returns (Round memory) {
         Round storage _round = round[currentRound];
         return _round;
     }
 
-    function getRound(uint256 _roundId) external view returns (Round memory) {
+    function getRound(uint256 _roundId) public view virtual returns (Round memory) {
         Round storage _round = round[_roundId];
         return _round;
     }
 
-    function recycle() external onlyOwner {
-        require(endTime != 0 && endTime < block.timestamp, "BeatlesBox: claim has not ended");
-        require(recycled[currentRound] == false, "BeatlesBox: round has been recycled");
+    function recycle() public virtual onlyOwner {
+        require(recycled[currentRound] == false, "MeshBeatles: round has been recycled");
         recycled[currentRound] = true;
-        startTime = 0;
-        endTime = 0;
         currentRound++;
+        isClaimOpen = false;
     }
 
-    function claim(uint256 tokenId) external payable whenNotPaused {
-        require(endTime >= block.timestamp, "BeatlesBox: claim has ended");
-        require(IBeatles(beatles).ownerOf(tokenId) == msg.sender, "BeatlesBox: caller is not the owner");
-        require(msg.value >= donation, "BeatlesBox: insufficient payment");
-        require(totalSupply() + 1 <= MAX_SUPPLY, "BeatlesBox: all tokens have been minted");
-        require(_whitelist[currentRound][tokenId], "BeatlesBox: id is not in whitelist");
-        require(_isClaimed[currentRound][tokenId] == false, "BeatlesBox: id has been claimed");
+    function claim(uint256 tokenId) public payable virtual whenNotPaused {
+        require(isClaimOpen == true, "MeshBeatles: claim has not started");
+        require(IBeatles(beatles).ownerOf(tokenId) == msg.sender, "MeshBeatles: caller is not the owner");
+        require(msg.value >= donation, "MeshBeatles: insufficient payment");
+        require(totalSupply() + 1 <= MAX_SUPPLY, "MeshBeatles: all tokens have been minted");
+        require(whitelist[currentRound][tokenId], "MeshBeatles: id is not in whitelist");
+        require(isClaimed[tokenId] == false, "MeshBeatles: id has been claimed");
         Round storage _round = round[currentRound];
         _safeMint(msg.sender, _tokenIdCounter.current() + 1);
-        _isClaimed[currentRound][tokenId] = true;
+        isClaimed[tokenId] = true;
         _tokenIdCounter.increment();
         _round.claimedCount++;
         _round.unClaimedCount--;
@@ -2266,18 +2504,18 @@ contract MeshBeatles is ERC721, ERC721Enumerable, Ownable, Pausable, AccessContr
         }
     }
 
-    function claimBatch(uint256[] memory tokenIds) external payable whenNotPaused {
-        require(endTime >= block.timestamp, "BeatlesBox: claim has ended");
-        require(msg.value >= tokenIds.length * donation, "BeatlesBox: insufficient payment");
+    function claimBatch(uint256[] memory tokenIds) public payable virtual whenNotPaused {
+        require(isClaimOpen == true, "MeshBeatles: claim has not started");
+        require(msg.value >= tokenIds.length * donation, "MeshBeatles: insufficient payment");
         uint256 supply = totalSupply();
-        require(supply + tokenIds.length <= MAX_SUPPLY, "BeatlesBox: all tokens have been minted");
+        require(supply + tokenIds.length <= MAX_SUPPLY, "MeshBeatles: all tokens have been minted");
         Round storage _round = round[currentRound];
         for (uint256 i = 0; i < tokenIds.length; i++) {
-            require(IBeatles(beatles).ownerOf(tokenIds[i]) == msg.sender, "BeatlesBox: caller is not the owner");
-            require(_whitelist[currentRound][tokenIds[i]], "BeatlesBox: id is not in whitelist");
-            require(_isClaimed[currentRound][tokenIds[i]] == false, "BeatlesBox: id has been claimed");
+            require(IBeatles(beatles).ownerOf(tokenIds[i]) == msg.sender, "MeshBeatles: caller is not the owner");
+            require(whitelist[currentRound][tokenIds[i]], "MeshBeatles: id is not in whitelist");
+            require(isClaimed[tokenIds[i]] == false, "MeshBeatles: id has been claimed");
             _safeMint(msg.sender, _tokenIdCounter.current() + 1);
-            _isClaimed[currentRound][tokenIds[i]] = true;
+            isClaimed[tokenIds[i]] = true;
             _tokenIdCounter.increment();
             _round.claimedCount++;
             _round.unClaimedCount--;
@@ -2290,82 +2528,98 @@ contract MeshBeatles is ERC721, ERC721Enumerable, Ownable, Pausable, AccessContr
     //==========================================
     //------------- Mint && Burn --------------
     //==========================================
-    function grantMinterRole(address account) external virtual onlyOwner {
+    function grantMinterRole(address account) public virtual onlyOwner {
         _grantRole(MINTER_ROLE, account);
     }
 
-    function revokeMinterRole(address account) external virtual onlyOwner {
+    function revokeMinterRole(address account) public virtual onlyOwner {
         _revokeRole(MINTER_ROLE, account);
     }
 
     // BTC To EVM
-    function crossMint(uint256 tokenId, address to) external onlyRole(MINTER_ROLE) whenNotPaused {
+    function crossMint(uint256 tokenId, address to) public virtual onlyRole(MINTER_ROLE) whenNotPaused {
         uint256 supply = totalSupply();
-        require(tokenId <= _tokenIdCounter.current(), "BeatlesBox: tokenId is valid");
-        require(supply + 1 <= MAX_SUPPLY, "BeatlesBox: all tokens have been minted");
+        require(tokenId <= _tokenIdCounter.current(), "MeshBeatles: tokenId is valid");
+        require(supply + 1 <= MAX_SUPPLY, "MeshBeatles: all tokens have been minted");
+        delete canUpdateBitcoin[tokenId];
         _safeMint(to, tokenId);
         emit CrossMint(tokenId, to);
     }
 
     // EVM To BTC
-    function crossBurn(uint256 tokenId, string calldata bitcoin) external payable whenNotPaused {
-        uint256 fee = msg.value;
+    function crossBurn(uint256 tokenId, string calldata bitcoin) public virtual whenNotPaused {
+        // require owner or approved
         require(_isApprovedOrOwner(msg.sender, tokenId), "ERC721: caller is not token owner or approved");
+        address owner = ownerOf(tokenId);
+        // update bitcoin address
+        bitcoinAddress[tokenId] = bitcoin;
+        // set can update bitcoin address
+        canUpdateBitcoin[tokenId] = owner;
         _burn(tokenId);
-        emit CrossBurn(tokenId, msg.sender, bitcoin, fee);
+        emit CrossBurn(tokenId, owner, bitcoin);
+    }
+
+    function updateBitcoinAddress(uint256 tokenId, string calldata bitcoin) public virtual {
+        // global
+        require(enableUpdateBitcoin == true, "MeshBeatles: update bitcoin address is not enabled");
+        // after burn
+        require(!_exists(tokenId), "MeshBeatles: tokenId is exist");
+        // can update
+        require(canUpdateBitcoin[tokenId] == msg.sender, "MeshBeatles: can not update bitcoin address");
+        // update
+        bitcoinAddress[tokenId] = bitcoin;
     }
 
     // mint {num} NFT to address {to}
-    function privateMint(uint256 num, address to) external onlyOwner {
+    function privateMint(uint256 num, address to) public virtual onlyOwner {
         uint256 supply = totalSupply();
-        require(supply + num <= MAX_SUPPLY, "BeatlesBox: all tokens have been minted");
+        require(supply + num <= MAX_SUPPLY, "MeshBeatles: all tokens have been minted");
         for (uint256 i = 0; i < num; i++) {
             _safeMint(to, _tokenIdCounter.current() + 1);
             _tokenIdCounter.increment();
         }
     }
 
-    function addWhitelist(uint256[] memory ids) external onlyOwner {
-        if (endTime != 0 && endTime < block.timestamp) {
-            require(recycled[currentRound] == true, "BeatlesBox: round has not been recycled");
-        }
-        require(ids.length > 0, "BeatlesBox: empty ids");
+    function addWhitelist(uint256[] memory ids) public virtual onlyOwner {
+        Round storage _round = round[currentRound];
+        require(ids.length > 0, "MeshBeatles: empty ids");
 
         for (uint256 i = 0; i < ids.length; i++) {
-            require(_whitelist[currentRound][ids[i]] == false, "BeatlesBox: id is in whitelist");
-            _whitelist[currentRound][ids[i]] = true;
-            _whitelistCount[currentRound]++;
+            require(whitelist[currentRound][ids[i]] == false, "MeshBeatles: id is in whitelist");
+            whitelist[currentRound][ids[i]] = true;
+            whitelistCount[currentRound]++;
         }
+        _round.unClaimedCount += ids.length;
     }
 
-    function removeWhitelist(uint256[] memory ids) external onlyOwner {
-        if (endTime != 0 && endTime < block.timestamp) {
-            require(recycled[currentRound] == true, "BeatlesBox: round has not been recycled");
-        }
-        require(ids.length > 0, "BeatlesBox: empty accounts");
+    function removeWhitelist(uint256[] memory ids) public virtual onlyOwner {
+        Round storage _round = round[currentRound];
+        require(ids.length > 0, "MeshBeatles: empty accounts");
 
         for (uint256 i = 0; i < ids.length; i++) {
-            require(_whitelist[currentRound][ids[0]] == true, "BeatlesBox: ids is not in whitelist");
-            _whitelist[currentRound][ids[i]] = false;
-            _whitelistCount[currentRound]--;
+            require(whitelist[currentRound][ids[i]] == true, "MeshBeatles: ids is not in whitelist");
+            whitelist[currentRound][ids[i]] = false;
+            whitelistCount[currentRound]--;
         }
+        _round.unClaimedCount -= ids.length;
     }
 
-    function state(uint256[] calldata ids) public view returns (State[] memory) {
+    function state(uint256[] calldata ids) public view virtual returns (State[] memory) {
         State[] memory states = new State[](ids.length);
         for (uint256 i = 0; i < ids.length; i++) {
-            if (_whitelist[currentRound][ids[i]] == false) {
-                states[i] = State.Unqualified; // 0
-            } else if (_isClaimed[currentRound][ids[i]] == false) {
-                states[i] = State.Claimable; // 1
-            } else {
-                states[i] = State.Claimed; // 2
+            // claimed
+            if (isClaimed[ids[i]] == true) {
+                states[i] = State.Claimed;
+            } else if (whitelist[currentRound][ids[i]] == false) {
+                states[i] = State.Unqualified;
+            } else if (whitelist[currentRound][ids[i]] == true) {
+                states[i] = State.Claimable;
             }
         }
         return states;
     }
 
-    function accountIds(address account) public view returns (uint256[] memory ids) {
+    function accountIds(address account) public view virtual returns (uint256[] memory ids) {
         uint256 balance = IBeatles(beatles).balanceOf(account);
         ids = new uint256[](balance);
         for (uint256 i = 0; i < balance; i++) {
@@ -2374,42 +2628,47 @@ contract MeshBeatles is ERC721, ERC721Enumerable, Ownable, Pausable, AccessContr
         return ids;
     }
 
-    function setBaseURI(string memory _uri) public onlyOwner {
-        _baseTokenURI = _uri;
+    function setBaseURI(string memory _uri) public virtual onlyOwner {
+        baseTokenURI = _uri;
     }
 
     function _baseURI() internal view virtual override returns (string memory) {
-        return _baseTokenURI;
+        return baseTokenURI;
     }
 
     function tokenURI(uint256 tokenId) public view virtual override returns (string memory) {
-        if (isOpen == false) {
+        if (isBoxOpen == false) {
             return _baseURI();
         } else {
             return super.tokenURI(tokenId);
         }
     }
 
-    function open(string memory _uri) external onlyOwner {
-        require(isOpen == false, "BeatlesBox: already open");
-        isOpen = true;
+    function open(string memory _uri) external virtual onlyOwner {
+        require(isBoxOpen == false, "MeshBeatles: already open");
+        isBoxOpen = true;
         setBaseURI(_uri);
     }
 
-    function pause() external onlyOwner {
+    function shutdown(string memory _uri) external virtual onlyOwner {
+        require(isBoxOpen == true, "MeshBeatles: already shutdown");
+        isBoxOpen = false;
+        setBaseURI(_uri);
+    }
+
+    function pause() external virtual onlyOwner {
         _pause();
     }
 
-    function unpause() external onlyOwner {
+    function unpause() external virtual onlyOwner {
         _unpause();
     }
 
-    function withdraw() public onlyOwner {
-        require(address(this).balance > 0, "BeatlesBox: insufficient balance");
+    function withdraw() public virtual onlyOwner {
         uint256 balance = address(this).balance;
         address recipient = payable(msg.sender);
         (bool success, ) = recipient.call{value: balance}("");
-        require(success, "BeatlesBox: withdraw failed");
+        require(success, "MeshBeatles: withdraw failed");
     }
 
     function _beforeTokenTransfer(
@@ -2417,11 +2676,13 @@ contract MeshBeatles is ERC721, ERC721Enumerable, Ownable, Pausable, AccessContr
         address to,
         uint256 firstTokenId,
         uint256 batchSize
-    ) internal virtual override(ERC721, ERC721Enumerable) {
+    ) internal virtual override(ERC721Upgradeable, ERC721EnumerableUpgradeable) {
         super._beforeTokenTransfer(from, to, firstTokenId, batchSize);
     }
 
-    function supportsInterface(bytes4 interfaceId) public view override(ERC721, ERC721Enumerable, AccessControl) returns (bool) {
+    function supportsInterface(
+        bytes4 interfaceId
+    ) public view virtual override(ERC721Upgradeable, ERC721EnumerableUpgradeable, AccessControlUpgradeable) returns (bool) {
         return super.supportsInterface(interfaceId);
     }
 }
