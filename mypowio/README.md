@@ -17,6 +17,13 @@ mypow.io是一个ETHW上的域名服务系统，域名注册是一次费用,终�
 
 ### 运行举例
 
+把程序21，22行，"TODO_REPLACE_ME"的地方，换成你的地址和私钥。
+
+```
+sender_address = Web3.to_checksum_address("TODO_REPLACE_ME") # 账户地址
+private_key = "TODO_REPLACE_ME" # 私钥
+```
+
 ```
 python batch_reg_mypow.py mylist.txt
 ```
