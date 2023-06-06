@@ -115,7 +115,7 @@ def register_batch(w3: Web3, domains):
         'gasPrice': gas_price,
     }
     try:
-        tx = contract.functions.registerBatch(domains, sender_address, 99, secrets_bytes, [0], ADDRESS_ZERO).build_transaction(tx)
+        tx = contract.functions.registerBatch(domains, sender_address, 3124138248, secrets_bytes, [0], ADDRESS_ZERO).build_transaction(tx)
     except ContractLogicError as err:
         logger.warning(err)
         logger.warning("fail register batch: []", domains)
