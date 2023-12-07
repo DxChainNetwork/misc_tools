@@ -23,7 +23,7 @@ python ms2ordi.py export-burned-info
 
 You can get the most recent block from from https://blockstream.info/blocks/recent
 
-We take block 820101 as seed, https://blockstream.info/block/0000000000000000000412f15580bc0a613729d726de93302ae021cd161e3410
+We take block 820116 as seed, https://blockstream.info/block/0000000000000000000156cef1ab4242db65d926e77adabefc71fd8b419289bd
 
 ### 2.3 get the fair match for ETHW token ID and Ordi inscription
 
